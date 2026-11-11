@@ -139,54 +139,173 @@ El catálogo combina el material propio de FaberLoom (SICOP, llave compartida, e
 
 ## MCP de SICOP
 
-SICOP es la plataforma de contratación pública de Costa Rica. El plugin declara su servidor MCP **público**: no pide credenciales ni identidad, y aporta **71 herramientas** de licitaciones, carteles, ofertas, adjudicaciones, contratos, proveedores, precios y sanciones.
+SICOP es la plataforma de contratación pública de Costa Rica. El plugin declara su servidor MCP **público**: no pide credenciales ni identidad, y aporta **71 herramientas** sobre licitaciones, carteles, ofertas, adjudicaciones, contratos, proveedores, precios, sanciones y series históricas.
 
-- Servidor: `sicop` en `https://sicop.vlinte.work/mcp`. El plugin lo declara y Claude Code lo muestra como **`plugin:faberloom:sicop`** en `/mcp`.
-- Herramientas: `mcp__plugin_faberloom_sicop__<herramienta>`, por ejemplo `mcp__plugin_faberloom_sicop__sicop_resolver`. El prefijo lleva el nombre del plugin porque el servidor viene de un plugin y no de tu configuración.
-- Antes de la primera consulta conviene cargar la skill `sicop-contratacion-publica`, que fija las reglas de reporte (nivel de medición, cobertura, moneda y caveats).
-- Para comprobarlo desde el shell: `claude mcp list` debe mostrar `plugin:faberloom:sicop: https://sicop.vlinte.work/mcp (HTTP) - ✔ Connected`.
+- Servidor: `sicop` en `https://sicop.vlinte.work/mcp`. Claude Code lo muestra como **`plugin:faberloom:sicop`** en `/mcp`.
+- Herramientas: `mcp__plugin_faberloom_sicop__<herramienta>`. El prefijo lleva el nombre del plugin porque el servidor viene de un plugin, no de tu configuración.
+- Comprobación: `claude mcp list` debe mostrar `plugin:faberloom:sicop: https://sicop.vlinte.work/mcp (HTTP) - ✔ Connected`.
+- Antes de la primera consulta conviene cargar la skill `sicop-contratacion-publica`, que fija cómo se reporta cada cifra.
 
-Ejemplos de pedidos que funcionan tal cual:
+### Las herramientas, por área
+
+| Área | Herramientas |
+|---|---|
+| Entrada en lenguaje natural | `sicop_preguntar` (router: clasifica la intención y llama a la tool correcta), `sicop_kb_buscar` (base de conocimiento y normativa), `sicop_resumen`, `sicop_diagnostico` |
+| Resolver nombres y códigos | `sicop_resolver` (nombre/alias/typo → cédula), `sicop_campo_buscar`, `sicop_catalogo_campo`, `sicop_proveedor_dim` |
+| Proveedores | `sicop_ficha_proveedor`, `sicop_representantes`, `sicop_representante_competencia`, `sicop_ordenes_proveedor`, `sicop_ficha_esosa` |
+| Procedimientos | `sicop_buscar_procedimiento`, `sicop_expediente`, `sicop_verificar_procedimiento`, `sicop_lineas_procedimiento`, `sicop_recursos_procedimiento`, `sicop_invitaciones_procedimiento`, `sicop_invitados_vs_ofertantes`, `sicop_tiempos_por_etapa`, `sicop_regimen`, `sicop_regimen_evaluacion`, `sicop_procedimientos_familia`, `sicop_mes_publicacion` |
+| Ofertas y competencia | `sicop_adjudicaciones`, `sicop_competencia_procedimiento`, `sicop_competencia_por_regimen`, `sicop_cara_a_cara`, `sicop_precios_identicos`, `sicop_perdidas_baratas`, `sicop_grafo_competidores` |
+| Producto y precios | `sicop_producto`, `sicop_producto_historia`, `sicop_producto_specs`, `sicop_producto_firma`, `sicop_buscar_productos`, `sicop_precios_institucion`, `sicop_mercado_familia` |
+| Integridad | `sicop_sanciones`, `sicop_carteles_objetados`, `sicop_excepciones`, `sicop_integridad`, `sicop_senales`, `sicop_vigilancia`, `sicop_ctl_deriva` |
+| Hechos y series | `sicop_fact_requerimiento`, `sicop_fact_oferta`, `sicop_fact_adjudicacion`, `sicop_fact_contrato`, `sicop_fact_orden`, `sicop_fact_recepcion`, `sicop_gold_status`, `sicop_resultado` |
+| Otras fuentes | `sicop_cgr_buscar` (Contraloría), `sicop_bccr_tc` (tipo de cambio BCCR) |
+| Operación del servidor | `sicop_corrida_pasos`, `sicop_reconciliar`, `sicop_autocorregir`, `sicop_reparar_mes`, `sicop_ciclo_diario`, `sicop_politica`, `sicop_registro`, `sicop_actividad_mcp`, `sicop_carril`, `sicop_pendientes`, `sicop_backtest_invitaciones`, `sicop_holdout` |
+
+### Ejemplos
+
+Todos se pueden pedir en lenguaje natural; el agente elige las herramientas.
+
+**1. Proveedor: qué ganó y de qué tamaño**
 
 ```
 ¿En qué licitaciones ganó Sondel?
-Compará los oferentes del cartel 2024LA-000123-01
-Serie de precios por año del proveedor 3101095926
-¿Hay sanciones o carteles objetados para ese proveedor?
 ```
 
-Cada cifra vuelve con su nivel de medición: no se inventan montos ni adjudicaciones que ninguna herramienta no devolvió.
+Cadena real: `sicop_resolver("sondel")` → cédula `3101095926`; `sicop_adjudicaciones(cedula)` → líneas adjudicadas. Devuelve, por ejemplo, SICOP `20181103002`, precio unitario `₡32.072,73`, IVA `₡4.169,45`, moneda `CRC`. Para el panorama completo: `sicop_ficha_proveedor("sondel")`, que agrega adjudicaciones por año, cartera de ejecución frente a captación, desempeño de entrega y familias principales.
+
+**2. Un procedimiento concreto**
+
+```
+Mostrame la trazabilidad del procedimiento 20181103002
+```
+
+`sicop_expediente(nro_sicop)` responde qué tramos están completos: cartel, ofertas, acto firme, adjudicado, contrato, garantía y recibido. Para la ficha del cartel: `sicop_buscar_procedimiento`; para las líneas: `sicop_lineas_procedimiento`.
+
+**3. Competencia y precios**
+
+```
+¿Quién más ofertó en ese procedimiento y a qué precio?
+¿Qué institución paga más por este producto?
+```
+
+`sicop_competencia_procedimiento` y `sicop_cara_a_cara` enfrentan oferentes; `sicop_precios_institucion` calcula el ratio máximo/mínimo entre instituciones para la misma marca, modelo, firma y año; `sicop_producto_historia` da la serie por año.
+
+**4. Integridad**
+
+```
+¿Sondel tiene sanciones o carteles objetados?
+```
+
+`sicop_sanciones(cedula o alias)` devuelve inhabilitaciones y multas; `sicop_carteles_objetados` la cola de revisión con monto estimado, institución y si se adjudicó después.
+
+**5. Empezar sin saber qué herramienta existe**
+
+```
+Preguntale a SICOP: cómo se comportó el mercado de calzado en 2025
+```
+
+`sicop_preguntar` es el router: clasifica la intención (ficha, mercado, competencia, procedimiento, precio, specs o KB) y llama a la herramienta correcta.
+
+> Cada cifra viaja con su sobre: `nivel_medicion` (captación, ejecución o entrega), `cobertura`, `moneda` y `caveats`. Si una herramienta no devolvió el dato, no existe para la respuesta.
 
 ---
 
 ## MCP de MWT.ONE
 
-MWT.ONE es la consola de operación: clientes, empresas, expedientes, proformas, pedidos, inventario y facturas. La consola emite **un DeviceToken por empresa**, y el mod lo usa así:
+MWT.ONE es la consola de operación: clientes, empresas, expedientes, proformas, pedidos, inventario, pagos, finanzas y correo. En la empresa de prueba, el servidor expone **183 herramientas**.
 
-1. `/mwt` inicia sesión y guarda un token por empresa.
-2. `/mwt <clave>` elige la empresa activa (por ejemplo `muito-work-limitada` o `sondel-s-a`).
-3. El agente llama la herramienta **`mcp__faberloom__mwt`**, que abre la sesión MCP de esa empresa y ejecuta la herramienta pedida.
+### Conectar
 
-Forma de la llamada:
+```
+/plugin configure faberloom@faberloom     # usuario y contraseña de la consola
+/mwt                                      # inicia sesión y lista empresas
+/mwt sondel-s-a                           # elige la empresa activa
+```
+
+La consola emite un **DeviceToken por empresa**. El mod guarda uno por cada empresa alcanzable y usa el de la activa; la contraseña sólo se usa en el login y nunca llega al modelo.
+
+### Llamar una herramienta
+
+El agente usa una sola herramienta de Claude, `mcp__faberloom__mwt`, con el nombre de la herramienta MWT y sus argumentos:
 
 ```json
 { "name": "expediente_buscar", "input": { "proforma": "2487-2026" } }
 ```
 
-Ejemplo real, con la empresa activa en Sondel:
+No hace falta escribir el JSON: se lo pedís en castellano y el agente arma la llamada.
+
+### Las herramientas, por área
+
+| Área | Herramientas (ejemplos) |
+|---|---|
+| Expedientes (25) | `expediente_listar`, `expediente_obtener`, `expediente_buscar`, `expediente_lineas`, `expediente_buscar_por_producto`, `expediente_resolve_oc_preview` |
+| Correo (12) | `correo_mensaje_listar`, `correo_mensaje_obtener`, `correo_contacto_listar`, `correo_contacto_crear`, `correo_envio_listar`, `correo_envio_crear` |
+| Transferencias (11) | `transferencia_listar`, `transferencia_crear`, `transferencia_avanzar`, `transferencia_aprobar`, `transferencia_despachar`; costos y liquidación: `transfer_costos_listar`, `transfer_liquidacion_preview` |
+| Clientes (10) | `cliente_listar`, `cliente_obtener`, `cliente_crear`, `cliente_editar`, `cliente_subsidiarias`, `cliente_kpis_pool` |
+| Tareas (10) | `tarea_listar`, `tarea_crear`, `tarea_completar`, `tarea_reprogramar`, `tarea_catalogo_listar` |
+| Finanzas (9) | `finanzas_overview`, `finanzas_comisiones`, `finanzas_commission_by_month`, `finanzas_margin_scatter`, `finanzas_cliente`, `finanzas_comisiones_por_marca` |
+| Productos (8) | `producto_listar`, `producto_buscar`, `producto_ficha_tecnica`, `producto_precio_cliente`, `producto_crear` |
+| Pagos (8) | `pago_applicables`, `pago_listar`, `pago_dry_run`, `pago_registrar`, `pago_conciliar` |
+| Documentos y artefactos (6+3) | `documento_subir`, `documento_listar`, `documento_descargar`, `documento_registrar_archivo`; `artefacto_publicar`, `artefacto_editar` |
+| SAP (6) | `sap_analizar`, `sap_confirmar`, `sap_upsert`, `sap_obtener`, `sap_sincronizar_discrepancias` |
+| Inventario (5) | `inventario_saldos_por_expediente`, `inventario_expedientes_con_pendiente`, `inventario_lineas_en_nodo`, `inventario_transferir_asignaciones` |
+| OC, proformas y portal (3+3+3) | `oc_listar`, `oc_obtener`, `oc_editar`; `proforma_generar`, `proforma_html`, `proforma_documento`; `portal_embarques`, `portal_subir_documento` |
+| Builder y plantillas (8) | `builder_templates_listar`, `builder_structure_construir`, `builder_artefacto_crear` |
+| Nodos (6) | `nodo_listar`, `nodo_crear`, `nodo_artefactos_listar`, `nodo_artefacto_crear` |
+| Identidad y auditoría (6) | `mwt_health`, `mwt_whoami`, `mwt_guia_rol`, `mwt_audit_write_registry`, `mwt_auditoria_listar` |
+| Precios y storage (4) | `pricelist_listar`, `pricelist_por_vencer`, `storage_subir_archivo`, `storage_subir_base64` |
+
+### Ejemplos
+
+**1. Estado de un expediente**
 
 ```
 Decime el estado del expediente 2487-2026
 ```
 
-devuelve la proforma `2487-2026`, la OC `505244`, el SAP `282479`, estado `EN_DESTINO`, monto cliente `USD 28.658,30` y 90 días de crédito.
+`expediente_buscar(proforma: "2487-2026")` devuelve la proforma, la OC `505244`, el SAP `282479`, estado `EN_DESTINO`, monto cliente `USD 28.658,30` y 90 días de crédito. Para el detalle: `expediente_lineas`, `expediente_obtener`.
 
-Detalles que importan:
+**2. Cliente y su cartera**
 
-- El token de cada empresa se guarda en el store del plugin (bajo `~/.claude`), no en el repositorio.
-- La contraseña sólo se usa para el login de la consola; el modelo nunca la ve.
-- Si el token caduca, `/mwt` lo vuelve a emitir.
-- Otros clientes MCP pueden usar el mismo servidor con `Authorization: DeviceToken <token>`.
+```
+¿Qué le vendimos a Sondel este año? ¿Cómo viene su crédito?
+```
+
+`cliente_listar` / `cliente_obtener` para la ficha, `expediente_listar` filtrado por cliente, `finanzas_cliente` para márgenes y `cliente_kpis_pool` para el agregado del grupo.
+
+**3. Inventario y pendientes**
+
+```
+¿Qué expedientes tienen líneas pendientes de entrega?
+```
+
+`inventario_expedientes_con_pendiente`, `inventario_saldos_por_expediente`, `inventario_lineas_en_nodo`.
+
+**4. Pagos y conciliación**
+
+```
+¿Qué pagos puedo aplicar a este expediente?
+```
+
+`pago_applicables`, `pago_dry_run` (simula sin escribir), `pago_registrar`, `pago_conciliar`.
+
+**5. Correo de la cuenta**
+
+```
+Listame los correos sin leer y proponeme una respuesta
+```
+
+`correo_mensaje_listar`, `correo_mensaje_obtener`, `correo_contacto_listar`, `correo_envio_crear`. La cuenta IMAP/SMTP se configura en FaberLoom → **Conexiones**; el MCP sólo opera sobre lo ya configurado.
+
+**6. Finanzas**
+
+```
+Mostrame el margen por cliente y las comisiones del mes
+```
+
+`finanzas_overview`, `finanzas_margin_scatter`, `finanzas_comisiones_por_marca`.
+
+> **Herramientas que escriben.** Varias terminan en `_crear`, `_editar`, `_registrar`, `_aprobar`, `_avanzar` o `_publicar`: crean o modifican datos reales. Pedilas en modo lectura primero (`_listar`, `_obtener`, `_dry_run`) y revisá el resultado antes de confirmar. El rol de la cuenta en la consola decide qué podés escribir.
 
 ---
 
