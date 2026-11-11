@@ -141,9 +141,10 @@ El catálogo combina el material propio de FaberLoom (SICOP, llave compartida, e
 
 SICOP es la plataforma de contratación pública de Costa Rica. El plugin declara su servidor MCP **público**: no pide credenciales ni identidad, y aporta **71 herramientas** de licitaciones, carteles, ofertas, adjudicaciones, contratos, proveedores, precios y sanciones.
 
-- Servidor: `sicop` (`https://sicop.vlinte.work/mcp`).
-- Herramientas: `mcp__sicop__*`. Se listan en `/mcp`.
+- Servidor: `sicop` en `https://sicop.vlinte.work/mcp`. El plugin lo declara y Claude Code lo muestra como **`plugin:faberloom:sicop`** en `/mcp`.
+- Herramientas: `mcp__plugin_faberloom_sicop__<herramienta>`, por ejemplo `mcp__plugin_faberloom_sicop__sicop_resolver`. El prefijo lleva el nombre del plugin porque el servidor viene de un plugin y no de tu configuración.
 - Antes de la primera consulta conviene cargar la skill `sicop-contratacion-publica`, que fija las reglas de reporte (nivel de medición, cobertura, moneda y caveats).
+- Para comprobarlo desde el shell: `claude mcp list` debe mostrar `plugin:faberloom:sicop: https://sicop.vlinte.work/mcp (HTTP) - ✔ Connected`.
 
 Ejemplos de pedidos que funcionan tal cual:
 
