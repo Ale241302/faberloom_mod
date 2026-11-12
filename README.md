@@ -11,15 +11,16 @@ Instalás un plugin y Claude Code pasa a trabajar con el catálogo de FaberLoom,
 1. [Qué es cada pieza](#qué-es-cada-pieza)
 2. [Requisitos](#requisitos)
 3. [Instalar](#instalar)
-4. [Configurar MWT.ONE](#configurar-mwtone)
-5. [El catálogo: 145 agentes y 293 skills](#el-catálogo-145-agentes-y-293-skills)
-6. [Comandos](#comandos)
-7. [MCP de SICOP](#mcp-de-sicop)
-8. [MCP de MWT.ONE](#mcp-de-mwtone)
-9. [Lo que vive en FaberLoom, no en el mod](#lo-que-vive-en-faberloom-no-en-el-mod)
-10. [Cómo trabajar un Space desde Claude](#cómo-trabajar-un-space-desde-claude)
-11. [Seguridad](#seguridad)
-12. [Licencia y atribución](#licencia-y-atribución)
+4. [Qué modelo usa y quién paga](#qué-modelo-usa-y-quién-paga)
+5. [Configurar MWT.ONE](#configurar-mwtone)
+6. [El catálogo: 145 agentes y 293 skills](#el-catálogo-145-agentes-y-293-skills)
+7. [Comandos](#comandos)
+8. [MCP de SICOP](#mcp-de-sicop)
+9. [MCP de MWT.ONE](#mcp-de-mwtone)
+10. [Lo que vive en FaberLoom, no en el mod](#lo-que-vive-en-faberloom-no-en-el-mod)
+11. [Cómo trabajar un Space desde Claude](#cómo-trabajar-un-space-desde-claude)
+12. [Seguridad](#seguridad)
+13. [Licencia y atribución](#licencia-y-atribución)
 
 ---
 
@@ -74,6 +75,32 @@ Dentro de una sesión: `/plugin` → pestaña **Installed** → `faberloom`, y b
 ```bash
 claude plugin update faberloom@faberloom
 ```
+
+---
+
+## Qué modelo usa y quién paga
+
+El mod **no trae modelo ni llave**: no incluye inferencia y nunca te pide una clave. El modelo lo pone tu Claude Code, con la cuenta con la que ya estás dentro.
+
+| Situación | Quién paga la inferencia |
+|---|---|
+| Suscripción de Claude (Pro, Max, Team) | Tu suscripción |
+| `ANTHROPIC_API_KEY` en el entorno | Tu clave de API |
+| Sin sesión ni clave | Nada: Claude Code pide `/login` antes de responder |
+
+El mod aporta agentes, skills y comandos: son archivos y no consumen tokens por sí solos. Los servidores MCP de SICOP y MWT.ONE tampoco: una consulta gasta sólo el turno que el modelo dedica a leer la respuesta.
+
+### Comprobar con qué cuenta corre
+
+```bash
+claude auth status
+```
+
+`authMethod` dice `oauth` cuando usa tu suscripción, `api_key` cuando usa una clave, y `none` cuando todavía no entraste (ahí `/login`). El mod funciona igual en los tres casos: nunca paga FaberLoom.
+
+### Si además usás FaberLoom
+
+El plugin de FaberLoom para DeepSeek Harness sí vive dentro de una aplicación que tiene su propia ruta de modelo. Cuando esa instalación trae una llave compartida —la app de escritorio de FaberLoom o `harness.mwt.one`—, las sesiones de esa app usan esa llave y quedan limitadas a MWT.ONE, SICOP y el correo de la cuenta. Para salir de ese límite, cargá tu propia llave en **Ajustes → Modelos**: desde ese momento pagás tu consumo y tu proveedor aplica tu saldo y tu cuota. El mod de Claude no interviene en esa decisión: acá siempre paga tu cuenta de Claude.
 
 ---
 
