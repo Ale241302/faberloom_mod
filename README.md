@@ -100,7 +100,7 @@ claude auth status
 
 ### Si además usás FaberLoom
 
-El plugin de FaberLoom para DeepSeek Harness sí vive dentro de una aplicación que tiene su propia ruta de modelo. Cuando esa instalación trae una llave compartida —la app de escritorio de FaberLoom o `harness.mwt.one`—, las sesiones de esa app usan esa llave y quedan limitadas a MWT.ONE, SICOP y el correo de la cuenta. Para salir de ese límite, cargá tu propia llave en **Ajustes → Modelos**: desde ese momento pagás tu consumo y tu proveedor aplica tu saldo y tu cuota. El mod de Claude no interviene en esa decisión: acá siempre paga tu cuenta de Claude.
+El plugin de FaberLoom para DeepSeek Harness vive dentro de una aplicación que tiene su propia ruta de modelo. La app de escritorio de FaberLoom y `harness.mwt.one` traen una llave compartida: no te piden ninguna al entrar, y las sesiones de esa app quedan limitadas a MWT.ONE, SICOP y el correo de la cuenta. Para salir de ese límite, cargá tu propia llave en **Ajustes → Modelos**: desde ese momento pagás tu consumo y tu proveedor aplica tu saldo y tu cuota. Un DeepSeek Harness propio, sin FaberLoom, no trae llave: ahí la cargás una vez y es la de tu equipo. El mod de Claude no interviene en esa decisión: acá siempre paga tu cuenta de Claude.
 
 ---
 
