@@ -324,6 +324,8 @@ Listame los correos sin leer y proponeme una respuesta
 
 `correo_mensaje_listar`, `correo_mensaje_obtener`, `correo_contacto_listar`, `correo_envio_crear`. La cuenta IMAP/SMTP se configura en FaberLoom → **Conexiones**; el MCP sólo opera sobre lo ya configurado.
 
+> El endpoint de empresa publica las herramientas de negocio y de la consola, **no un protocolo de buzón**. El correo IMAP del producto se lee en FaberLoom (y en su panel de Correo); desde Claude se trabaja con las herramientas `correo_*` de la consola, no con el buzón IMAP.
+
 **6. Finanzas**
 
 ```
@@ -342,7 +344,7 @@ El mod **no** reimplementa el producto: lee lo que FaberLoom ya produce y lo pon
 
 | Función | Dónde se configura | Cómo la ve Claude |
 |---|---|---|
-| **Correo IMAP/SMTP** | FaberLoom → **Conexiones**: cuenta IMAP, servidor SMTP, credenciales y política de envío | Las herramientas de correo viven en el producto; en Claude se trabaja el correo con el MCP de MWT.ONE y los archivos del Space |
+| **Correo IMAP/SMTP** | FaberLoom → **Conexiones**: cuenta IMAP, servidor SMTP, credenciales y política de envío | El buzón IMAP del producto no se expone al mod; en Claude se trabaja el correo de la consola con `correo_mensaje_listar` y `correo_envio_crear` |
 | **Mesa de trabajo (workbench)** | FaberLoom → **Mesa de trabajo**: la cola, severidades, revisiones y aprobaciones | `/mesa` lee la cola real del storage del producto |
 | **Flujos (workflows)** | FaberLoom → **Flujos**: nodos, conexiones, ejecución | `/faberloom` y `/mesa` listan los flujos proyectados; el editor vive en el producto |
 | **Rutinas** | FaberLoom → **Rutinas**: disparadores, pasos y programación | `/faberloom` las lista |
